@@ -1,0 +1,988 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Build your Meal</title>
+  <style>
+    :root{
+      --bg1:#fff5fb;
+      --bg2:#eef7ff;
+      --card:#ffffffcc;
+      --card2:#ffffffee;
+      --ink:#1f2937;
+      --muted:#6b7280;
+      --accent:#ff6fb3;
+      --accent2:#7c4dff;
+      --good:#22c55e;
+      --bad:#ef4444;
+      --shadow: 0 22px 60px rgba(31,41,55,.18);
+      --shadow2: 0 10px 30px rgba(31,41,55,.12);
+      --radius: 22px;
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      color:var(--ink);
+      min-height:100vh;
+      overflow-x:hidden;
+      background:
+        radial-gradient(1200px 900px at 15% 10%, var(--bg1), transparent 60%),
+        radial-gradient(1100px 800px at 90% 20%, var(--bg2), transparent 60%),
+        radial-gradient(900px 700px at 50% 95%, #fffde7, transparent 55%),
+        linear-gradient(180deg, #ffffff, #f7fbff);
+    }
+
+    /* floating cute blobs */
+    .floaters{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:0;
+      opacity:.65;
+      filter: blur(.2px);
+    }
+    .floater{
+      position:absolute;
+      width:220px; height:220px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0) 55%),
+                  linear-gradient(135deg, rgba(255,111,179,.55), rgba(124,77,255,.35));
+      box-shadow: 0 25px 80px rgba(255,111,179,.22);
+      animation: bob 9s ease-in-out infinite;
+    }
+    .floater:nth-child(1){ left:-70px; top:60px; animation-duration: 10s; transform: rotate(10deg); }
+    .floater:nth-child(2){ right:-90px; top:120px; width:260px; height:260px; animation-duration: 12s; background:
+        radial-gradient(circle at 35% 35%, #fff, rgba(255,255,255,0) 55%),
+        linear-gradient(135deg, rgba(125,211,252,.55), rgba(255,111,179,.35)); }
+    .floater:nth-child(3){ left:8%; bottom:-120px; width:320px; height:320px; animation-duration: 13s; background:
+        radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0) 55%),
+        linear-gradient(135deg, rgba(250,204,21,.35), rgba(255,111,179,.35)); }
+    @keyframes bob{
+      0%,100%{ transform: translateY(0) rotate(8deg) }
+      50%{ transform: translateY(-18px) rotate(-6deg) }
+    }
+
+    .wrap{
+      position:relative;
+      z-index:1;
+      max-width: 980px;
+      margin: 0 auto;
+      padding: 26px 16px 44px;
+    }
+
+    .topbar{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom: 14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:10px;
+      padding:10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.65);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(10px);
+    }
+    .brand .dot{
+      width:14px;height:14px;border-radius:999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 10px 30px rgba(255,111,179,.35);
+    }
+    .brand b{ font-size:14px; letter-spacing:.2px; }
+    .brand span{ font-size:12px; color:var(--muted); margin-left:6px; }
+
+    .pill{
+      padding:10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.65);
+      box-shadow: var(--shadow2);
+      backdrop-filter: blur(10px);
+      font-size:12px;
+      color:var(--muted);
+      display:flex;
+      gap:10px;
+      align-items:center;
+    }
+    .pill strong{ color:var(--ink); font-weight:700; }
+
+    .card{
+      background: var(--card);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255,255,255,.6);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .hero{
+      display:grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 18px;
+      padding: 22px;
+    }
+    @media (max-width: 860px){
+      .hero{ grid-template-columns: 1fr; }
+    }
+
+    h1{
+      margin:0 0 8px;
+      font-size: 38px;
+      line-height: 1.05;
+      letter-spacing: -.6px;
+    }
+    .subtitle{
+      margin:0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .ctaRow{
+      margin-top: 16px;
+      display:flex;
+      flex-wrap:wrap;
+      gap: 10px;
+      align-items:center;
+    }
+
+    .btn{
+      border:0;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:.2px;
+      border-radius: 16px;
+      padding: 12px 14px;
+      box-shadow: 0 14px 35px rgba(31,41,55,.14);
+      transition: transform .08s ease, filter .15s ease;
+      user-select:none;
+    }
+    .btn:active{ transform: translateY(1px) scale(.99); }
+    .btnPrimary{
+      color:white;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+    }
+    .btnGhost{
+      color: var(--ink);
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(31,41,55,.08);
+    }
+
+    .mini{
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .chip{
+      display:inline-flex;
+      gap:8px;
+      align-items:center;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.7);
+      border: 1px solid rgba(31,41,55,.06);
+    }
+    .chip i{
+      width:10px;height:10px;border-radius:99px;
+      background: linear-gradient(135deg, rgba(255,111,179,.9), rgba(125,211,252,.9));
+      display:inline-block;
+    }
+
+    /* chibi panel */
+    .chibiPanel{
+      background: var(--card2);
+      border: 1px dashed rgba(255,111,179,.45);
+      border-radius: 18px;
+      padding: 12px;
+      box-shadow: var(--shadow2);
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      align-items:center;
+      justify-content:center;
+    }
+    .chibiRow{
+      display:flex; gap: 10px; align-items:center; justify-content:center;
+      flex-wrap:wrap;
+    }
+    .chibiLabel{
+      font-size:12px;
+      color:var(--muted);
+      text-align:center;
+      line-height:1.35;
+    }
+
+    /* quiz area */
+    .quiz{
+      padding: 18px 22px 22px;
+      border-top: 1px solid rgba(31,41,55,.06);
+    }
+
+    .progressBar{
+      height: 12px;
+      background: rgba(31,41,55,.08);
+      border-radius: 999px;
+      overflow:hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.55);
+    }
+    .progressFill{
+      height:100%;
+      width:0%;
+      background: linear-gradient(135deg, rgba(255,111,179,.95), rgba(124,77,255,.85));
+      border-radius: 999px;
+      transition: width .35s ease;
+    }
+    .quizHeader{
+      margin-top: 14px;
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      align-items:flex-end;
+      flex-wrap:wrap;
+    }
+    .qTitle{
+      margin:0;
+      font-size: 22px;
+      line-height:1.25;
+      letter-spacing:-.2px;
+    }
+    .qHint{
+      margin:0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .answers{
+      margin-top: 14px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px){
+      .answers{ grid-template-columns: 1fr; }
+    }
+
+    .answerBtn{
+      text-align:left;
+      border-radius: 18px;
+      padding: 14px 14px;
+      background: rgba(255,255,255,.78);
+      border: 1px solid rgba(31,41,55,.08);
+      cursor:pointer;
+      box-shadow: 0 10px 24px rgba(31,41,55,.10);
+      transition: transform .08s ease, filter .15s ease, border-color .15s ease;
+      position:relative;
+      overflow:hidden;
+    }
+    .answerBtn:hover{ filter: brightness(1.02); border-color: rgba(255,111,179,.35); }
+    .answerBtn:active{ transform: translateY(1px); }
+
+    .answerBtn .k{
+      display:inline-flex;
+      width:28px; height:28px;
+      align-items:center; justify-content:center;
+      border-radius: 10px;
+      background: linear-gradient(135deg, rgba(255,111,179,.20), rgba(124,77,255,.16));
+      border: 1px solid rgba(31,41,55,.08);
+      font-weight:900;
+      margin-right:10px;
+    }
+    .answerBtn .t{
+      font-weight:800;
+      line-height:1.25;
+    }
+    .answerBtn .s{
+      display:block;
+      margin-left: 38px;
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .answerBtn.correct{
+      border-color: rgba(34,197,94,.55);
+      background: rgba(34,197,94,.10);
+    }
+    .answerBtn.wrong{
+      border-color: rgba(239,68,68,.55);
+      background: rgba(239,68,68,.08);
+    }
+
+    .footerRow{
+      margin-top: 14px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+
+    .toast{
+      font-size: 12px;
+      color: var(--muted);
+      display:flex;
+      align-items:center;
+      gap: 10px;
+    }
+    .badge{
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.75);
+      border: 1px solid rgba(31,41,55,.08);
+      box-shadow: 0 8px 18px rgba(31,41,55,.08);
+      font-weight:800;
+      color: var(--ink);
+    }
+
+    /* screens */
+    .screen{ display:none; }
+    .screen.active{ display:block; }
+
+    /* modal-ish result */
+    .resultBox{
+      margin-top: 16px;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.82);
+      border: 1px solid rgba(31,41,55,.08);
+      box-shadow: var(--shadow2);
+    }
+    .resultBox h2{
+      margin:0 0 6px;
+      font-size: 18px;
+    }
+    .resultBox p{
+      margin: 0;
+      color: var(--muted);
+      line-height:1.45;
+      font-size: 13px;
+    }
+
+    /* tiny chibi SVG sizing */
+    .chibiSvg{ width:92px; height:auto; }
+    .spark{
+      display:inline-block;
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(255,111,179,.9), rgba(250,204,21,.85));
+      box-shadow: 0 10px 30px rgba(255,111,179,.35);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="floaters" aria-hidden="true">
+    <div class="floater"></div>
+    <div class="floater"></div>
+    <div class="floater"></div>
+  </div>
+
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <span class="dot"></span>
+        <b>Build your Meal</b>
+        <span>chibi quiz</span>
+      </div>
+      <div class="pill">
+        <span class="spark"></span>
+        <span><strong id="pillMode">Welcome</strong> · <span id="pillMeta">20 questions</span></span>
+      </div>
+    </div>
+
+    <div class="card">
+      <!-- WELCOME SCREEN -->
+      <section id="welcome" class="screen active">
+        <div class="hero">
+          <div>
+            <h1>Build your Meal 🍱</h1>
+            <p class="subtitle">
+              Pilih jawapan paling tepat untuk bina “meal” yang bantu fokus belajar.
+              Quiz ini ada <b>20 soalan</b>, setiap soalan <b>5 pilihan</b>, dan soalan akan <b>random</b> setiap kali.
+            </p>
+
+            <div class="ctaRow">
+              <button class="btn btnPrimary" id="btnStart">Start Quiz ✨</button>
+              <button class="btn btnGhost" id="btnShuffle">Shuffle Questions 🔀</button>
+              <button class="btn btnGhost" id="btnHow">How it works?</button>
+            </div>
+
+            <div class="mini" style="margin-top:12px">
+              <span class="chip"><i></i> Cute chibi theme</span>
+              <span class="chip"><i></i> Center + big layout</span>
+              <span class="chip"><i></i> No repeating answers</span>
+            </div>
+
+            <div id="howBox" class="resultBox" style="display:none">
+              <h2>How it works</h2>
+              <p>
+                Klik 1 jawapan. Lepas pilih, jawapan akan “lock” dan terus ke soalan seterusnya.
+                Di akhir, kamu dapat score & tips ringkas.
+              </p>
+            </div>
+          </div>
+
+          <div class="chibiPanel">
+            <div class="chibiRow">
+              <!-- Chibi #1 -->
+              <svg class="chibiSvg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-label="chibi character">
+                <defs>
+                  <linearGradient id="hair1" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#7c4dff"/>
+                    <stop offset="1" stop-color="#ff6fb3"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="100" cy="92" r="62" fill="#ffe3ef" stroke="rgba(31,41,55,.12)" stroke-width="6"/>
+                <path d="M42 90c10-54 110-70 128 0 6 24-4 60-18 78-12 15-24 22-44 22s-33-6-45-22C49 150 37 114 42 90z"
+                      fill="url(#hair1)" opacity=".92"/>
+                <circle cx="78" cy="110" r="10" fill="#1f2937"/>
+                <circle cx="122" cy="110" r="10" fill="#1f2937"/>
+                <circle cx="75" cy="106" r="3" fill="#fff"/>
+                <circle cx="119" cy="106" r="3" fill="#fff"/>
+                <path d="M86 132c10 10 18 10 28 0" stroke="#ef5da8" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="60" cy="130" r="10" fill="#ff6fb3" opacity=".35"/>
+                <circle cx="140" cy="130" r="10" fill="#ff6fb3" opacity=".35"/>
+                <rect x="58" y="160" width="84" height="60" rx="22" fill="rgba(255,255,255,.8)" stroke="rgba(31,41,55,.10)" stroke-width="4"/>
+                <path d="M78 198h44" stroke="#7c4dff" stroke-width="8" stroke-linecap="round" opacity=".75"/>
+              </svg>
+
+              <!-- Chibi #2 -->
+              <svg class="chibiSvg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-label="chibi character">
+                <defs>
+                  <linearGradient id="hair2" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#7dd3fc"/>
+                    <stop offset="1" stop-color="#facc15"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="100" cy="92" r="62" fill="#ffe9d6" stroke="rgba(31,41,55,.12)" stroke-width="6"/>
+                <path d="M40 88c18-56 122-56 140 0 8 26-4 64-20 82-12 14-28 20-50 20s-39-6-51-20C43 152 32 114 40 88z"
+                      fill="url(#hair2)" opacity=".92"/>
+                <path d="M70 112c7-10 22-10 29 0" stroke="#1f2937" stroke-width="8" stroke-linecap="round"/>
+                <path d="M101 112c7-10 22-10 29 0" stroke="#1f2937" stroke-width="8" stroke-linecap="round"/>
+                <path d="M90 136c8 8 12 8 20 0" stroke="#ef5da8" stroke-width="8" stroke-linecap="round"/>
+                <circle cx="62" cy="132" r="10" fill="#facc15" opacity=".35"/>
+                <circle cx="138" cy="132" r="10" fill="#facc15" opacity=".35"/>
+                <rect x="52" y="160" width="96" height="60" rx="22" fill="rgba(255,255,255,.8)" stroke="rgba(31,41,55,.10)" stroke-width="4"/>
+                <path d="M76 190h48" stroke="#ff6fb3" stroke-width="8" stroke-linecap="round" opacity=".75"/>
+              </svg>
+            </div>
+
+            <div class="chibiLabel">
+              “Study buddies” chibi 🤍<br/>
+              Ready to build your meal?
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- QUIZ SCREEN -->
+      <section id="quiz" class="screen">
+        <div class="quiz">
+          <div class="progressBar" aria-label="progress">
+            <div class="progressFill" id="progressFill"></div>
+          </div>
+
+          <div class="quizHeader">
+            <div>
+              <p class="qHint" id="qMeta">Question 1 of 20</p>
+              <h2 class="qTitle" id="qText">Loading...</h2>
+            </div>
+            <div class="toast">
+              <span class="badge">Score: <span id="scoreText">0</span></span>
+              <button class="btn btnGhost" id="btnQuit">Quit</button>
+            </div>
+          </div>
+
+          <div class="answers" id="answers"></div>
+
+          <div class="footerRow">
+            <div class="mini">
+              <span class="chip"><i></i> Tip: pilih jawapan paling “steady energy”</span>
+            </div>
+            <button class="btn btnGhost" id="btnSkip">Skip ➜</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- RESULT SCREEN -->
+      <section id="result" class="screen">
+        <div class="hero">
+          <div>
+            <h1>Results 🎀</h1>
+            <p class="subtitle" id="resultLine">Your score...</p>
+
+            <div class="resultBox">
+              <h2 id="resultTitle">Meal Built:</h2>
+              <p id="resultTips"></p>
+            </div>
+
+            <div class="ctaRow">
+              <button class="btn btnPrimary" id="btnRestart">Play Again ✨</button>
+              <button class="btn btnGhost" id="btnBackHome">Back Home</button>
+            </div>
+          </div>
+
+          <div class="chibiPanel">
+            <div class="chibiRow" id="resultChibis"></div>
+            <div class="chibiLabel" id="resultCuteLine">Cute report incoming…</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ====== Question Bank (20 Q, 5 options each) ======
+    // Note: options are written to avoid obvious repeats; distractors are plausible.
+    const QUESTION_BANK = [
+      {
+        q: "Untuk tenaga stabil masa study, sarapan paling sesuai ialah…",
+        options: [
+          { t:"Oat + susu/ yogurt + buah", s:"Carb kompleks + protein bantu tenaga steady", ok:true },
+          { t:"Air gas + biskut manis", s:"Cepat naik gula, cepat drop", ok:false },
+          { t:"Roti putih + jem tebal", s:"Rendah fiber, senang lapar", ok:false },
+          { t:"Kopi sahaja", s:"Boleh jittery & cepat letih", ok:false },
+          { t:"Candy + minuman tenaga", s:"Spike tinggi, crash cepat", ok:false }
+        ]
+      },
+      {
+        q: "Nutrien yang selalu dikaitkan dengan fungsi otak & memori ialah…",
+        options: [
+          { t:"Omega-3", s:"Dari ikan berlemak, chia, flax", ok:true },
+          { t:"Trans fat", s:"Boleh ganggu kesihatan jantung/otak", ok:false },
+          { t:"Garam berlebihan", s:"Tak bantu fokus", ok:false },
+          { t:"Gula tambahan", s:"Bukan pilihan utama untuk memori", ok:false },
+          { t:"Pewarna makanan", s:"Tak spesifik untuk memori", ok:false }
+        ]
+      },
+      {
+        q: "Snek paling ‘study-friendly’ (tak buat mengantuk cepat) ialah…",
+        options: [
+          { t:"Kacang + buah", s:"Lemak sihat + fiber", ok:true },
+          { t:"Chips besar satu paket", s:"Tinggi garam/kalori", ok:false },
+          { t:"Kek krim", s:"Gula tinggi", ok:false },
+          { t:"Air manis pekat", s:"Spike gula", ok:false },
+          { t:"Coklat bar gula tinggi", s:"Cepat crash", ok:false }
+        ]
+      },
+      {
+        q: "Kalau kamu asyik ‘crash’ petang masa belajar, kemungkinan punca ialah…",
+        options: [
+          { t:"Makan tengah hari tinggi gula/ rendah protein", s:"Cepat lapar & lesu", ok:true },
+          { t:"Minum air kosong cukup", s:"Itu bagus, bukan punca crash", ok:false },
+          { t:"Makan sayur secukupnya", s:"Biasanya bantu stabil", ok:false },
+          { t:"Tidur malam cukup", s:"Ini bantu fokus", ok:false },
+          { t:"Ambil rehat sekejap", s:"Ini bantu tenaga", ok:false }
+        ]
+      },
+      {
+        q: "Minuman paling baik untuk kekal fokus lama ialah…",
+        options: [
+          { t:"Air kosong", s:"Hydration bantu tumpuan", ok:true },
+          { t:"Teh susu manis extra", s:"Gula tinggi", ok:false },
+          { t:"Soda", s:"Gula + gas", ok:false },
+          { t:"Minuman tenaga setiap jam", s:"Kafein/gula berlebihan", ok:false },
+          { t:"Sirap pekat", s:"Bukan hydration terbaik", ok:false }
+        ]
+      },
+      {
+        q: "Untuk ‘balanced meal’, combo yang paling tepat ialah…",
+        options: [
+          { t:"Carb kompleks + protein + sayur + lemak sihat", s:"Lengkap untuk tenaga & kenyang", ok:true },
+          { t:"Carb sahaja", s:"Cepat lapar", ok:false },
+          { t:"Protein sahaja", s:"Kurang tenaga segera", ok:false },
+          { t:"Lemak sahaja", s:"Tak seimbang", ok:false },
+          { t:"Dessert sahaja", s:"Gula tinggi", ok:false }
+        ]
+      },
+      {
+        q: "Bila patut ambil kafein kalau ada exam/ study panjang?",
+        options: [
+          { t:"Awal sesi (atau sebelum mula), sederhana", s:"Elak terlalu lewat & berlebihan", ok:true },
+          { t:"Setiap 20 minit", s:"Terlalu banyak", ok:false },
+          { t:"Waktu mau tidur", s:"Ganggu tidur", ok:false },
+          { t:"Ganti makan dengan kopi", s:"Tak cukup nutrisi", ok:false },
+          { t:"Minum 3-4 tin energy drink", s:"Berisiko tinggi", ok:false }
+        ]
+      },
+      {
+        q: "Makanan tinggi fiber membantu study sebab…",
+        options: [
+          { t:"Lambatkan serapan gula → tenaga stabil", s:"Kurang ‘spike & crash’", ok:true },
+          { t:"Buat kita lebih haus", s:"Bukan sebab utama", ok:false },
+          { t:"Kurangkan keperluan tidur", s:"Tidur tetap penting", ok:false },
+          { t:"Buat otak bekerja tanpa glukosa", s:"Otak tetap guna glukosa", ok:false },
+          { t:"Ganti semua nutrien lain", s:"Masih perlu protein/lemak", ok:false }
+        ]
+      },
+      {
+        q: "‘Lean protein’ contoh paling sesuai ialah…",
+        options: [
+          { t:"Ayam tanpa kulit / ikan / tofu", s:"Protein tinggi, lemak lebih rendah", ok:true },
+          { t:"Sosej proses", s:"Biasanya tinggi garam/lemak", ok:false },
+          { t:"Ayam goreng tepung tebal", s:"Lemak tinggi", ok:false },
+          { t:"Burger daging berlemak", s:"Kurang ‘lean’", ok:false },
+          { t:"Nugget banyak", s:"Proses + garam", ok:false }
+        ]
+      },
+      {
+        q: "Bila kamu skip makan, kesan pada study selalunya…",
+        options: [
+          { t:"Susah fokus & cepat letih", s:"Tenaga otak tak stabil", ok:true },
+          { t:"Fokus jadi makin power", s:"Tak semestinya", ok:false },
+          { t:"Memori automatik kuat", s:"Tidak", ok:false },
+          { t:"Tak rasa lapar langsung seharian", s:"Biasa akan lapar", ok:false },
+          { t:"Mood jadi sentiasa gembira", s:"Kadang jadi mudah marah", ok:false }
+        ]
+      },
+      {
+        q: "Vitamin B sering dikaitkan dengan…",
+        options: [
+          { t:"Metabolisme tenaga & fungsi saraf", s:"Bantu proses tenaga", ok:true },
+          { t:"Menaikkan gula darah mendadak", s:"Bukan fungsi utama", ok:false },
+          { t:"Membuat tidur terus hilang", s:"Tidak", ok:false },
+          { t:"Menggantikan protein", s:"Tidak", ok:false },
+          { t:"Menghapus stress serta-merta", s:"Tak begitu", ok:false }
+        ]
+      },
+      {
+        q: "Pilihan makan tengah hari paling ‘study-ready’ ialah…",
+        options: [
+          { t:"Nasi perang + ikan + sayur", s:"Kombo seimbang", ok:true },
+          { t:"Mi segera + minuman manis", s:"Garam/gula tinggi", ok:false },
+          { t:"Pastri manis + kopi", s:"Cepat crash", ok:false },
+          { t:"Air kosong sahaja", s:"Tak cukup kalori/nutrien", ok:false },
+          { t:"Keropok besar satu mangkuk", s:"Tak seimbang", ok:false }
+        ]
+      },
+      {
+        q: "Kalau mau snack sebelum test, masa terbaik ialah…",
+        options: [
+          { t:"30–60 minit sebelum", s:"Bagi masa cerna & stabil tenaga", ok:true },
+          { t:"5 minit sebelum (makan berat)", s:"Boleh rasa tak selesa", ok:false },
+          { t:"Tengah jawab soalan (makan banyak)", s:"Ganggu fokus", ok:false },
+          { t:"Selepas habis test sahaja", s:"Terlambat untuk tenaga", ok:false },
+          { t:"Tak perlu apa-apa walau lapar", s:"Lapar boleh ganggu fokus", ok:false }
+        ]
+      },
+      {
+        q: "Antioxidant banyak dalam…",
+        options: [
+          { t:"Buah beri / buah-buahan berwarna", s:"Contoh blueberry, strawberry", ok:true },
+          { t:"Gula-gula", s:"Bukan sumber antioxidant utama", ok:false },
+          { t:"Minyak trans", s:"Tidak", ok:false },
+          { t:"Soda diet", s:"Bukan fokus antioxidant", ok:false },
+          { t:"Keropok bergaram", s:"Tidak", ok:false }
+        ]
+      },
+      {
+        q: "Kalau kamu mengantuk lepas makan, cuba…",
+        options: [
+          { t:"Kurangkan portion & tambah protein/sayur", s:"Elak carb ringkas berlebihan", ok:true },
+          { t:"Tambah lagi dessert", s:"Lagi mengantuk/crash", ok:false },
+          { t:"Minum sirap pekat", s:"Spike gula", ok:false },
+          { t:"Baring terus 2 jam", s:"Boleh ganggu jadual", ok:false },
+          { t:"Skip air kosong", s:"Hydration penting", ok:false }
+        ]
+      },
+      {
+        q: "‘Complex carbohydrate’ contoh ialah…",
+        options: [
+          { t:"Ubi, oat, nasi perang", s:"Fiber lebih tinggi", ok:true },
+          { t:"Gula putih", s:"Simple", ok:false },
+          { t:"Air manis", s:"Simple", ok:false },
+          { t:"Candy", s:"Simple", ok:false },
+          { t:"Jem", s:"Simple", ok:false }
+        ]
+      },
+      {
+        q: "Untuk ‘brain fuel’ yang baik, lemak sihat termasuk…",
+        options: [
+          { t:"Avocado / kacang / minyak zaitun", s:"Lemak tak tepu", ok:true },
+          { t:"Trans fat", s:"Elakkan", ok:false },
+          { t:"Minyak goreng berulang kali", s:"Tak ideal", ok:false },
+          { t:"Shortening banyak", s:"Kurang sihat", ok:false },
+          { t:"Krim manis berlebihan", s:"Tinggi lemak tepu", ok:false }
+        ]
+      },
+      {
+        q: "Jika mau ‘snack murah tapi power’, pilih…",
+        options: [
+          { t:"Telur rebus + buah", s:"Protein + fiber", ok:true },
+          { t:"Biskut krim besar", s:"Gula tinggi", ok:false },
+          { t:"Air manis botol", s:"Gula tinggi", ok:false },
+          { t:"Chips pedas", s:"Garam tinggi", ok:false },
+          { t:"Jeli manis", s:"Kurang nutrisi", ok:false }
+        ]
+      },
+      {
+        q: "Tanda kamu mungkin kurang hydration masa belajar ialah…",
+        options: [
+          { t:"Sakit kepala ringan & susah fokus", s:"Minum air dulu", ok:true },
+          { t:"Fokus makin tajam sepanjang masa", s:"Bukan tanda dehidrasi", ok:false },
+          { t:"Tak pernah rasa dahaga langsung", s:"Tak semestinya", ok:false },
+          { t:"Tenaga jadi super tanpa makan", s:"Tidak", ok:false },
+          { t:"Mata jadi bersinar sebab gula", s:"Bukan hydration", ok:false }
+        ]
+      },
+      {
+        q: "Menu ‘meal prep’ ringkas untuk study week ialah…",
+        options: [
+          { t:"Sediakan protein + sayur siap, tambah carb kompleks ikut perlu", s:"Senang & konsisten", ok:true },
+          { t:"Beli dessert setiap hari", s:"Tak seimbang", ok:false },
+          { t:"Hanya mi segera stok banyak", s:"Garam tinggi", ok:false },
+          { t:"Skip makan, fokus saja", s:"Boleh burnout", ok:false },
+          { t:"Minum kopi ganti semua meal", s:"Tak cukup nutrisi", ok:false }
+        ]
+      }
+    ];
+
+    // ====== State ======
+    let questions = [];
+    let idx = 0;
+    let score = 0;
+    let locked = false;
+
+    // ====== Elements ======
+    const elWelcome = document.getElementById("welcome");
+    const elQuiz = document.getElementById("quiz");
+    const elResult = document.getElementById("result");
+
+    const pillMode = document.getElementById("pillMode");
+    const pillMeta = document.getElementById("pillMeta");
+
+    const btnStart = document.getElementById("btnStart");
+    const btnShuffle = document.getElementById("btnShuffle");
+    const btnHow = document.getElementById("btnHow");
+    const howBox = document.getElementById("howBox");
+
+    const qMeta = document.getElementById("qMeta");
+    const qText = document.getElementById("qText");
+    const answers = document.getElementById("answers");
+    const progressFill = document.getElementById("progressFill");
+    const scoreText = document.getElementById("scoreText");
+
+    const btnSkip = document.getElementById("btnSkip");
+    const btnQuit = document.getElementById("btnQuit");
+
+    const resultLine = document.getElementById("resultLine");
+    const resultTitle = document.getElementById("resultTitle");
+    const resultTips = document.getElementById("resultTips");
+    const resultChibis = document.getElementById("resultChibis");
+    const resultCuteLine = document.getElementById("resultCuteLine");
+
+    const btnRestart = document.getElementById("btnRestart");
+    const btnBackHome = document.getElementById("btnBackHome");
+
+    // ====== Helpers ======
+    function shuffleArray(arr){
+      const a = arr.slice();
+      for(let i=a.length-1;i>0;i--){
+        const j = Math.floor(Math.random()*(i+1));
+        [a[i],a[j]] = [a[j],a[i]];
+      }
+      return a;
+    }
+
+    function show(screen){
+      [elWelcome, elQuiz, elResult].forEach(s=>s.classList.remove("active"));
+      screen.classList.add("active");
+    }
+
+    function initQuiz({reshuffle=true}={}){
+      questions = reshuffle ? shuffleArray(QUESTION_BANK) : QUESTION_BANK.slice();
+      idx = 0;
+      score = 0;
+      locked = false;
+      scoreText.textContent = score;
+      pillMode.textContent = "Quiz";
+      pillMeta.textContent = `${questions.length} questions`;
+      renderQuestion();
+    }
+
+    function renderQuestion(){
+      locked = false;
+      const total = questions.length;
+      const qObj = questions[idx];
+
+      qMeta.textContent = `Question ${idx+1} of ${total}`;
+      qText.textContent = qObj.q;
+
+      const progress = Math.round(((idx)/total)*100);
+      progressFill.style.width = `${progress}%`;
+
+      // randomize answer order per question
+      const opts = shuffleArray(qObj.options).map((opt, i)=>({ ...opt, key:String.fromCharCode(65+i) }));
+      answers.innerHTML = "";
+
+      opts.forEach((opt, i)=>{
+        const btn = document.createElement("button");
+        btn.className = "answerBtn";
+        btn.type = "button";
+        btn.innerHTML = `
+          <span class="k">${opt.key}</span>
+          <span class="t">${opt.t}</span>
+          <span class="s">${opt.s}</span>
+        `;
+        btn.addEventListener("click", ()=> pickAnswer(btn, opt.ok));
+        answers.appendChild(btn);
+      });
+
+      btnSkip.textContent = (idx === total-1) ? "Finish ➜" : "Skip ➜";
+    }
+
+    function pickAnswer(btn, isCorrect){
+      if(locked) return;
+      locked = true;
+
+      if(isCorrect){
+        score++;
+        scoreText.textContent = score;
+        btn.classList.add("correct");
+      }else{
+        btn.classList.add("wrong");
+        // highlight the correct one too
+        const qObj = questions[idx];
+        const correctText = qObj.options.find(o=>o.ok)?.t;
+        [...answers.children].forEach(b=>{
+          const t = b.querySelector(".t")?.textContent;
+          if(t === correctText) b.classList.add("correct");
+        });
+      }
+
+      // auto next after short delay
+      setTimeout(nextQuestion, 520);
+    }
+
+    function nextQuestion(){
+      const total = questions.length;
+      if(idx < total-1){
+        idx++;
+        renderQuestion();
+      }else{
+        finishQuiz();
+      }
+    }
+
+    function finishQuiz(){
+      progressFill.style.width = `100%`;
+      pillMode.textContent = "Results";
+      pillMeta.textContent = `Score ${score}/${questions.length}`;
+
+      const pct = Math.round((score/questions.length)*100);
+
+      let title, tips, cute;
+      if(pct >= 85){
+        title = "✨ Brain-Power Bento";
+        tips = "Kamu pilih combo yang sangat solid: tenaga stabil, protein cukup, dan snek bijak. Kekalkan hydration dan rehat pendek (5–10 min) setiap 45–60 minit belajar.";
+        cute = "Chibi sangat proud! ⭐⭐⭐";
+      }else if(pct >= 65){
+        title = "🌸 Focus Picnic Set";
+        tips = "Bagus! Tinggal upgrade sikit: kurangkan gula ringkas, tambah fiber (buah/sayur/oat) dan pilih protein yang lebih ‘lean’.";
+        cute = "Nice! Chibi bagi thumbs up 👍";
+      }else if(pct >= 45){
+        title = "🍙 Almost-There Onigiri";
+        tips = "Okay okay! Cuba buat 2 perubahan mudah: (1) tambah protein pada meal utama, (2) tukar snek manis kepada buah + kacang atau yogurt.";
+        cute = "Chibi kata: kita boleh improve! 💪";
+      }else{
+        title = "🥲 Sleepy Snack Box";
+        tips = "Jangan risau—start dengan asas: jangan skip makan, minum air cukup, pilih carb kompleks + protein. Elak minuman manis/energy drink berlebihan masa study.";
+        cute = "Chibi peluk dulu 🤍 kemudian try lagi!";
+      }
+
+      resultLine.textContent = `You scored ${score}/${questions.length} (${pct}%).`;
+      resultTitle.textContent = `Meal Built: ${title}`;
+      resultTips.textContent = tips;
+      resultCuteLine.textContent = cute;
+
+      // show some extra chibi faces based on performance
+      resultChibis.innerHTML = "";
+      const count = pct >= 85 ? 4 : pct >= 65 ? 3 : pct >= 45 ? 2 : 1;
+      for(let i=0;i<count;i++){
+        resultChibis.appendChild(makeMiniChibi(i));
+      }
+
+      show(elResult);
+    }
+
+    function makeMiniChibi(seed=0){
+      const wrap = document.createElement("div");
+      wrap.innerHTML = `
+      <svg class="chibiSvg" viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <defs>
+          <linearGradient id="g${seed}" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="${seed%2===0 ? "#ff6fb3" : "#7c4dff"}"/>
+            <stop offset="1" stop-color="${seed%3===0 ? "#7dd3fc" : "#facc15"}"/>
+          </linearGradient>
+        </defs>
+        <circle cx="100" cy="92" r="62" fill="${seed%2===0 ? "#ffe3ef" : "#ffe9d6"}" stroke="rgba(31,41,55,.12)" stroke-width="6"/>
+        <path d="M42 90c10-54 110-70 128 0 6 24-4 60-18 78-12 15-24 22-44 22s-33-6-45-22C49 150 37 114 42 90z"
+              fill="url(#g${seed})" opacity=".92"/>
+        <circle cx="78" cy="110" r="10" fill="#1f2937"/>
+        <circle cx="122" cy="110" r="10" fill="#1f2937"/>
+        <circle cx="75" cy="106" r="3" fill="#fff"/>
+        <circle cx="119" cy="106" r="3" fill="#fff"/>
+        <path d="M90 136c8 8 12 8 20 0" stroke="#ef5da8" stroke-width="8" stroke-linecap="round"/>
+        <circle cx="60" cy="130" r="10" fill="#ff6fb3" opacity=".35"/>
+        <circle cx="140" cy="130" r="10" fill="#ff6fb3" opacity=".35"/>
+        <rect x="58" y="160" width="84" height="60" rx="22" fill="rgba(255,255,255,.8)" stroke="rgba(31,41,55,.10)" stroke-width="4"/>
+        <path d="M78 198h44" stroke="${seed%2===0 ? "#7c4dff" : "#ff6fb3"}" stroke-width="8" stroke-linecap="round" opacity=".75"/>
+      </svg>`;
+      return wrap.firstElementChild;
+    }
+
+    // ====== Events ======
+    btnHow.addEventListener("click", ()=>{
+      howBox.style.display = (howBox.style.display === "none") ? "block" : "none";
+    });
+
+    btnShuffle.addEventListener("click", ()=>{
+      pillMode.textContent = "Welcome";
+      pillMeta.textContent = "Questions shuffled";
+      // just a tiny feedback
+      btnShuffle.textContent = "Shuffled! ✅";
+      setTimeout(()=> btnShuffle.textContent = "Shuffle Questions 🔀", 900);
+    });
+
+    btnStart.addEventListener("click", ()=>{
+      initQuiz({reshuffle:true});
+      show(elQuiz);
+    });
+
+    btnSkip.addEventListener("click", ()=>{
+      if(locked) return;
+      // skip without penalty
+      nextQuestion();
+    });
+
+    btnQuit.addEventListener("click", ()=>{
+      // go home
+      pillMode.textContent = "Welcome";
+      pillMeta.textContent = "20 questions";
+      show(elWelcome);
+    });
+
+    btnRestart.addEventListener("click", ()=>{
+      initQuiz({reshuffle:true});
+      show(elQuiz);
+    });
+
+    btnBackHome.addEventListener("click", ()=>{
+      pillMode.textContent = "Welcome";
+      pillMeta.textContent = "20 questions";
+      show(elWelcome);
+    });
+
+    // set default pill
+    pillMode.textContent = "Welcome";
+    pillMeta.textContent = "20 questions";
+  </script>
+</body>
+</html>
